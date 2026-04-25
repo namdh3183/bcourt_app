@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192203049103",
+    "project_id": "bcourt-e408f",
+    "storage_bucket": "bcourt-e408f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192203049103:android:15bff90fd5f6a3b71cc8fa",
+        "android_client_info": {
+          "package_name": "com.bcourt.bcourt_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCk1pwfCiLjFXgMlkCopNBYTZ6r1ovoz4Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
