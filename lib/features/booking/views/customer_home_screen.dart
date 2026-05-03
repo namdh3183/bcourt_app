@@ -6,6 +6,8 @@ import '../../../services/auth_service.dart';
 import '../../auth/views/login_screen.dart';
 import 'booking_history_screen.dart';
 import 'sub_court_selection_screen.dart';
+import '../../notification/views/notification_screen.dart';
+import '../../../services/notification_service.dart';
 
 class CustomerHomeScreen extends StatefulWidget {
   const CustomerHomeScreen({super.key});
@@ -40,6 +42,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
   }
 
   void _handleLogout() async {
+    await NotificationService().clearToken();
     await _authService.signOut();
     if (mounted) {
       Navigator.pushReplacement(
@@ -191,6 +194,14 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
               title: const Text('Lịch sử đặt sân'),
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => const BookingHistoryScreen())),
             ),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: const Text('Thông báo'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+              },
+            ),
             const Spacer(),
             const Divider(),
             ListTile(
@@ -230,7 +241,7 @@ class _CustomerHomeScreenState extends State<CustomerHomeScreen> {
                 ),
                 const SizedBox(height: 4),
                 DropdownButtonFormField<String>(
-                  value: _priceRange,
+                  initialValue: _priceRange,
                   dropdownColor: Colors.white,
                   decoration: InputDecoration(
                     filled: true,

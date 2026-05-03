@@ -8,6 +8,8 @@ import '../../auth/views/login_screen.dart';
 import 'add_court_screen.dart';
 import 'owner_court_detail_screen.dart';
 import 'select_court_for_bank_screen.dart';
+import '../../notification/views/notification_screen.dart';
+import '../../../services/notification_service.dart';
 
 class OwnerHomeScreen extends StatefulWidget {
   const OwnerHomeScreen({super.key});
@@ -39,6 +41,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
   }
 
   void _handleLogout(BuildContext context) async {
+    await NotificationService().clearToken();
     await _authService.signOut();
     if (context.mounted) {
       Navigator.pushReplacement(
@@ -110,6 +113,14 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                     ),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: const Text('Thông báo'),
+              onTap: () {
+                Navigator.pop(context);
+                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
               },
             ),
             const Spacer(),

@@ -101,6 +101,13 @@ class _OwnerCourtScheduleScreenState extends State<OwnerCourtScheduleScreen> {
               Navigator.pop(context);
               bool success = await _dbService.cancelBooking(booking.id);
               if (success && mounted) {
+                await _dbService.sendNotification(
+                  recipientId: booking.customerId,
+                  title: 'Lịch đặt đã bị hủy bởi chủ sân',
+                  body: 'Chủ sân đã hủy lịch đặt tại ${widget.court.name}. Vui lòng liên hệ chủ sân nếu cần.',
+                  type: 'booking_cancelled_by_owner',
+                  relatedId: booking.id,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(
@@ -151,6 +158,13 @@ class _OwnerCourtScheduleScreenState extends State<OwnerCourtScheduleScreen> {
               Navigator.pop(context);
               bool success = await _dbService.markAsFullyPaid(booking.id);
               if (success && mounted) {
+                await _dbService.sendNotification(
+                  recipientId: booking.customerId,
+                  title: 'Đã xác nhận thanh toán đủ',
+                  body: 'Chủ sân xác nhận bạn đã thanh toán đầy đủ cho lịch đặt tại ${widget.court.name}.',
+                  type: 'fully_paid',
+                  relatedId: booking.id,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đã xác nhận nhận đủ tiền! Lịch hoàn tất.'),

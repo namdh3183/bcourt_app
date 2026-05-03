@@ -128,6 +128,15 @@ class _PaymentScreenState extends State<PaymentScreen> {
     if (ok && mounted) {
       _countdownTimer.cancel();
 
+      // Thông báo chủ sân khách đã upload bill cọc
+      await _dbService.sendNotification(
+        recipientId: widget.court.ownerId,
+        title: 'Khách đã gửi bill đặt cọc',
+        body: '${widget.customer.fullName} đã upload bill cọc cho lịch tại ${widget.court.name}. Vui lòng kiểm tra và duyệt.',
+        type: 'deposit_uploaded',
+        relatedId: widget.bookingId,
+      );
+
       BookingModel updatedBooking = BookingModel(
         id: widget.bookingId,
         customerId: widget.booking.customerId,

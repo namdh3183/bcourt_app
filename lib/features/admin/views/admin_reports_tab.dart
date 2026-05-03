@@ -123,11 +123,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
 
     if (confirmed == true && mounted) {
       final adminId = FirebaseAuth.instance.currentUser?.uid ?? '';
+      final noteText = noteController.text.trim();
       final ok = await _dbService.resolveReport(
         reportId: report.id,
         newReportStatus: 'resolved_warning',
         reportedUserId: report.reportedUserId,
-        adminNote: noteController.text.trim(),
+        adminNote: noteText,
         adminId: adminId,
       );
       if (mounted) {
@@ -135,7 +136,16 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           content: Text(ok ? 'Đã gửi cảnh báo thành công' : 'Có lỗi xảy ra, vui lòng thử lại'),
           backgroundColor: ok ? Colors.green : Colors.red,
         ));
-        if (ok) setState(() => _selectedReport = null);
+        if (ok) {
+          setState(() => _selectedReport = null);
+          await _dbService.sendNotification(
+            recipientId: report.reportedUserId,
+            title: 'Bạn đã nhận cảnh báo từ Admin',
+            body: 'Admin nhắc nhở: $noteText. Vui lòng lưu ý để tránh bị xử lý nặng hơn.',
+            type: 'admin_warning',
+            relatedId: report.id,
+          );
+        }
       }
     }
     noteController.dispose();
@@ -196,11 +206,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     if (confirmed == true && mounted) {
       final adminId = FirebaseAuth.instance.currentUser?.uid ?? '';
       final note = noteController.text.trim();
+      final banReason = banReasonController.text.trim();
       final ok = await _dbService.resolveReport(
         reportId: report.id,
         newReportStatus: 'resolved_banned_temp',
         reportedUserId: report.reportedUserId,
-        banReason: banReasonController.text.trim(),
+        banReason: banReason,
         adminNote: note.isEmpty ? null : note,
         banDays: 7,
         adminId: adminId,
@@ -210,7 +221,16 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           content: Text(ok ? 'Đã ban tài khoản 7 ngày thành công' : 'Có lỗi xảy ra, vui lòng thử lại'),
           backgroundColor: ok ? Colors.green : Colors.red,
         ));
-        if (ok) setState(() => _selectedReport = null);
+        if (ok) {
+          setState(() => _selectedReport = null);
+          await _dbService.sendNotification(
+            recipientId: report.reportedUserId,
+            title: 'Tài khoản của bạn đã bị tạm khóa',
+            body: 'Lý do: $banReason. Thời gian: 7 ngày.',
+            type: 'admin_ban',
+            relatedId: report.id,
+          );
+        }
       }
     }
     banReasonController.dispose();
@@ -299,11 +319,12 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
     if (confirmed == true && mounted) {
       final adminId = FirebaseAuth.instance.currentUser?.uid ?? '';
       final note = noteController.text.trim();
+      final banReason = banReasonController.text.trim();
       final ok = await _dbService.resolveReport(
         reportId: report.id,
         newReportStatus: 'resolved_banned_permanent',
         reportedUserId: report.reportedUserId,
-        banReason: banReasonController.text.trim(),
+        banReason: banReason,
         adminNote: note.isEmpty ? null : note,
         adminId: adminId,
       );
@@ -312,7 +333,16 @@ class _AdminReportsTabState extends State<AdminReportsTab> {
           content: Text(ok ? 'Đã ban vĩnh viễn tài khoản thành công' : 'Có lỗi xảy ra, vui lòng thử lại'),
           backgroundColor: ok ? Colors.green : Colors.red,
         ));
-        if (ok) setState(() => _selectedReport = null);
+        if (ok) {
+          setState(() => _selectedReport = null);
+          await _dbService.sendNotification(
+            recipientId: report.reportedUserId,
+            title: 'Tài khoản của bạn đã bị khóa vĩnh viễn',
+            body: 'Lý do: $banReason.',
+            type: 'admin_ban',
+            relatedId: report.id,
+          );
+        }
       }
     }
     banReasonController.dispose();

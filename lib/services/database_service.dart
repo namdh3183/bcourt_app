@@ -4,6 +4,7 @@ import '../models/court_model.dart';
 import 'dart:io';
 import 'package:firebase_storage/firebase_storage.dart';
 import '../models/booking_model.dart';
+import '../models/notification_model.dart';
 import '../models/user_model.dart';
 import '../models/report_model.dart';
 
@@ -847,6 +848,66 @@ class DatabaseService {
       log("Lỗi khi xử lý báo cáo: $e");
       return false;
     }
+  }
+
+  // ================= THÔNG BÁO =================
+
+  /// Tạo thông báo trong Firestore và đẩy vào hàng đợi FCM
+  Future<void> sendNotification({
+    required String recipientId,
+    required String title,
+    required String body,
+    required String type,
+    String? relatedId,
+  }) async {
+    try {
+      // Lưu thông báo vào collection notifications
+      await _firestore.collection('notifications').add({
+        'recipientId': recipientId,
+        'title': title,
+        'body': body,
+        'type': type,
+        if (relatedId != null) 'relatedId': relatedId,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      // Lấy FCM token của người nhận để đẩy push
+      DocumentSnapshot userDoc =
+          await _firestore.collection('users').doc(recipientId).get();
+      if (!userDoc.exists) return;
+
+      final userData = userDoc.data() as Map<String, dynamic>;
+      final String? fcmToken = userData['fcmToken'] as String?;
+
+      if (fcmToken != null && fcmToken.isNotEmpty) {
+        // Ghi vào hàng đợi — Cloud Function sẽ trigger gửi FCM
+        await _firestore.collection('fcm_send_queue').add({
+          'token': fcmToken,
+          'title': title,
+          'body': body,
+          'data': {
+            'type': type,
+            'relatedId': relatedId ?? '',
+          },
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+    } catch (e) {
+      log('Lỗi gửi thông báo: $e');
+    }
+  }
+
+  /// Stream thông báo của một user, sắp xếp mới nhất trước, tối đa 50 bản ghi
+  Stream<List<NotificationModel>> getNotificationsStream(String userId) {
+    return _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .limit(50)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => NotificationModel.fromMap(doc.data(), doc.id))
+            .toList());
   }
 
   // Lấy thông tin chủ sân từ courtId (dùng cho màn báo cáo phía khách)

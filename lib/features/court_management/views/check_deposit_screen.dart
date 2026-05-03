@@ -111,6 +111,13 @@ class _CheckDepositScreenState extends State<CheckDepositScreen> {
               Navigator.pop(dialogCtx);
               bool success = await _dbService.cancelBooking(widget.booking.id);
               if (success && mounted) {
+                await _dbService.sendNotification(
+                  recipientId: widget.booking.customerId,
+                  title: 'Lịch đặt đã bị từ chối',
+                  body: 'Chủ sân đã từ chối bill cọc. Vui lòng kiểm tra lại và liên hệ chủ sân.',
+                  type: 'booking_cancelled_by_owner',
+                  relatedId: widget.booking.id,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đã từ chối lịch đặt. Khung giờ đã được mở lại.'),
@@ -151,6 +158,13 @@ class _CheckDepositScreenState extends State<CheckDepositScreen> {
               Navigator.pop(dialogCtx);
               bool success = await _dbService.approveBooking(widget.booking.id);
               if (success && mounted) {
+                await _dbService.sendNotification(
+                  recipientId: widget.booking.customerId,
+                  title: 'Lịch đặt đã được xác nhận',
+                  body: 'Chủ sân đã duyệt bill cọc. Hãy đến sân đúng giờ và thanh toán phần còn lại.',
+                  type: 'booking_confirmed',
+                  relatedId: widget.booking.id,
+                );
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Đã duyệt lịch! Chờ khách đến sân trả phần còn lại.'),

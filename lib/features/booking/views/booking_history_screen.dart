@@ -74,6 +74,16 @@ class _BookingHistoryScreenState extends State<BookingHistoryScreen> {
               Navigator.pop(context);
               bool success = await _dbService.cancelBooking(booking.id);
               if (success && mounted) {
+                final court = await _dbService.getCourtById(booking.courtId);
+                if (court != null) {
+                  await _dbService.sendNotification(
+                    recipientId: court.ownerId,
+                    title: 'Khách đã hủy lịch đặt',
+                    body: 'Khách đã hủy lịch đặt tại ${court.name}.',
+                    type: 'booking_cancelled_by_customer',
+                    relatedId: booking.id,
+                  );
+                }
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Đã hủy lịch thành công!')),
                 );

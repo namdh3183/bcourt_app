@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'firebase_options.dart';
 import 'features/auth/views/login_screen.dart';
 import 'features/booking/views/customer_home_screen.dart';
@@ -9,12 +10,29 @@ import 'features/court_management/views/owner_home_screen.dart';
 import 'features/admin/views/admin_home_screen.dart';
 import 'models/user_model.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
+import 'features/auth/views/ban_check_wrapper.dart';
+
+// Xử lý FCM message khi app đang ở background/đóng (bắt buộc là top-level function)
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+}
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // Đăng ký background message handler trước khi runApp
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Khởi tạo notification service (xin quyền, tạo channel, lắng nghe foreground)
+  if (!kIsWeb) {
+    await NotificationService().initialize();
+  }
+
   runApp(const BCourtApp());
 }
 
@@ -94,9 +112,9 @@ class BCourtApp extends StatelessWidget {
                   case 'admin':
                     return const AdminHomeScreen();
                   case 'owner':
-                    return const OwnerHomeScreen();
+                    return const BanCheckWrapper(child: OwnerHomeScreen());
                   default:
-                    return const CustomerHomeScreen();
+                    return const BanCheckWrapper(child: CustomerHomeScreen());
                 }
               },
             );

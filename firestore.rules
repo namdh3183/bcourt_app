@@ -1,0 +1,62 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Hàm kiểm tra admin
+    function isAdmin() {
+      return request.auth != null &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Users: mọi người đăng nhập đều đọc được (cần để hiển thị tên chủ sân)
+    // Chỉ user đó hoặc admin mới được ghi
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null &&
+        (request.auth.uid == userId || isAdmin());
+    }
+
+    // Courts: mọi người đăng nhập đọc được; chủ sân tạo mới;
+    // chủ sân hoặc admin cập nhật/xóa
+    match /courts/{courtId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null &&
+        (request.auth.uid == resource.data.ownerId || isAdmin());
+      allow delete: if request.auth != null &&
+        (request.auth.uid == resource.data.ownerId || isAdmin());
+    }
+
+    // Bookings: customer và chủ sân đều cần đọc/ghi
+    match /bookings/{bookingId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null;
+      allow update: if request.auth != null;
+      allow delete: if false;
+    }
+
+    // Notifications: chỉ người nhận mới đọc được thông báo của mình
+    // Mọi user đăng nhập có thể tạo thông báo (gửi từ client-side)
+    match /notifications/{notifId} {
+      allow read: if request.auth != null &&
+        request.auth.uid == resource.data.recipientId;
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // FCM send queue: client ghi, Cloud Function xử lý và xóa
+    match /fcm_send_queue/{docId} {
+      allow create: if request.auth != null;
+      allow read, update, delete: if false;
+    }
+
+    // Reports: customer tạo; admin đọc và cập nhật trạng thái
+    match /reports/{reportId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.reporterId || isAdmin());
+      allow create: if request.auth != null;
+      allow update: if isAdmin();
+      allow delete: if false;
+    }
+  }
+}

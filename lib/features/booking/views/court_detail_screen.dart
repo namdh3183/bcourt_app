@@ -303,6 +303,15 @@ class _CourtDetailScreenState extends State<CourtDetailScreen> {
       return;
     }
 
+    // Thông báo chủ sân có khách đặt mới
+    await _dbService.sendNotification(
+      recipientId: widget.court.ownerId,
+      title: 'Có khách đặt sân mới',
+      body: '${_currentUser!.fullName} đã đặt ${widget.court.name} - ${widget.subCourtName}. Chờ khách thanh toán cọc.',
+      type: 'new_booking',
+      relatedId: result,
+    );
+
     // result là bookingId thực tế đã lưu vào Firestore
     BookingModel savedBooking = BookingModel(
       id: result,

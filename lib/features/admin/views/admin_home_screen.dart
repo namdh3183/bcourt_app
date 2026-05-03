@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import '../../../models/user_model.dart';
 import '../../../models/court_model.dart';
 import '../../../services/database_service.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/notification_service.dart';
 import '../../auth/views/login_screen.dart';
 import 'admin_dashboard_tab.dart';
 import 'admin_reports_tab.dart';
@@ -19,7 +21,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
   final DatabaseService _dbService = DatabaseService();
   int _selectedIndex = 0;
   int _pendingReportCount = 0;
+  int _pendingCourtCount = 0;
+  int _pendingOwnerCount = 0;
   StreamSubscription? _reportSubscription;
+  StreamSubscription? _courtSubscription;
+  StreamSubscription? _ownerSubscription;
 
   static const Color primaryPurple = Color(0xFFBF89F5);
 
@@ -33,15 +39,32 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
         });
       }
     });
+    _courtSubscription = _dbService.getAllCourtsForAdminStream().listen((courts) {
+      if (mounted) {
+        setState(() {
+          _pendingCourtCount = courts.where((c) => c.status == 'pending').length;
+        });
+      }
+    });
+    _ownerSubscription = _dbService.getAllUsersStream().listen((users) {
+      if (mounted) {
+        setState(() {
+          _pendingOwnerCount = users.where((u) => u.status == 'pending_approval').length;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _reportSubscription?.cancel();
+    _courtSubscription?.cancel();
+    _ownerSubscription?.cancel();
     super.dispose();
   }
 
   void _handleLogout() async {
+    if (!kIsWeb) await NotificationService().clearToken();
     await AuthService().signOut();
     if (mounted) {
       Navigator.pushReplacement(
@@ -154,8 +177,8 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           Divider(color: Colors.white.withOpacity(0.3), thickness: 1),
           const SizedBox(height: 8),
           _buildSidebarItem(icon: Icons.dashboard, label: 'Dashboard', index: 0),
-          _buildSidebarItem(icon: Icons.sports_tennis, label: 'Quản lý sân', index: 1),
-          _buildSidebarItem(icon: Icons.people, label: 'Người dùng', index: 2),
+          _buildSidebarItem(icon: Icons.sports_tennis, label: 'Quản lý sân', index: 1, hasBadge: _pendingCourtCount > 0),
+          _buildSidebarItem(icon: Icons.people, label: 'Người dùng', index: 2, hasBadge: _pendingOwnerCount > 0),
           _buildSidebarItem(
             icon: Icons.report,
             label: 'Báo cáo',
@@ -202,7 +225,18 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
                       IconButton(
                         icon: const Icon(Icons.check_circle, color: Colors.green),
                         tooltip: 'Duyệt / Mở hoạt động',
-                        onPressed: () => _dbService.updateCourtStatus(court.id, 'active'),
+                        onPressed: () async {
+                          final ok = await _dbService.updateCourtStatus(court.id, 'active');
+                          if (ok && isPending) {
+                            await _dbService.sendNotification(
+                              recipientId: court.ownerId,
+                              title: 'Sân đã được admin duyệt',
+                              body: 'Câu lạc bộ "${court.name}" đã được phê duyệt và hiển thị cho khách hàng.',
+                              type: 'court_approved',
+                              relatedId: court.id,
+                            );
+                          }
+                        },
                       ),
                     if (!isBanned)
                       IconButton(

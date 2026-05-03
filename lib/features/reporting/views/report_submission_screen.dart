@@ -164,7 +164,7 @@ class _ReportSubmissionScreenState extends State<ReportSubmissionScreen> {
               _buildSectionLabel('Lý do báo cáo *'),
               _buildCard(
                 child: DropdownButtonFormField<String>(
-                  value: _selectedReason,
+                  initialValue: _selectedReason,
                   decoration: const InputDecoration(
                     border: InputBorder.none,
                     hintText: 'Chọn lý do',

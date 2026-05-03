@@ -189,7 +189,7 @@ class _EditCourtScreenState extends State<EditCourtScreen> {
               const SizedBox(height: 16),
 
               DropdownButtonFormField<String>(
-                value: _status,
+                initialValue: _status,
                 decoration: const InputDecoration(
                   labelText: 'Trạng thái',
                   border: OutlineInputBorder(),

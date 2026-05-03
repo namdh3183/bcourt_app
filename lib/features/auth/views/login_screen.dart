@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:intl/intl.dart';
 import '../../../models/user_model.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/notification_service.dart';
 import '../../booking/views/customer_home_screen.dart';
 import '../../court_management/views/owner_home_screen.dart';
 import 'register_screen.dart';
@@ -221,6 +222,10 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
       return;
+    }
+    // Lưu FCM token sau khi đăng nhập thành công (chỉ trên mobile)
+    if (!kIsWeb) {
+      await NotificationService().saveTokenToFirestore();
     }
     if (role == 'customer') {
       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const CustomerHomeScreen()));
